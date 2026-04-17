@@ -1,1 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HabitHeatmap</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Familjen+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f8f7f4;
+  --white: #ffffff;
+  --border: #e8e4dc;
+  --border2: #d8d4cc;
+  --ink: #1a1814;
+  --muted: #8a8278;
+  --dim: #c4beb4;
+  --sans: 'Plus Jakarta Sans', sans-serif;
+  --display: 'Familjen Grotesk', sans-serif;
+}
+
+html, body { min-height: 100%; background: var(--bg); color: var(--ink); font-family: var(--sans); }
+
+/* ── HEADER ── */
+header {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 0 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 60px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.logo {
+  font-family: var(--display);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.3px;
+}
+
+.logo span { color: var(--muted); font-weight: 400; }
+
+.header-right { display: flex; align-items: center; gap: 12px; }
+
+.streak-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff8e6;
+  border: 1px solid #f0d070;
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #8a6800;
+}
+
+/* ── LAYOUT ── */
+.container { max-width: 960px; margin: 0 auto; padding: 36px 24px 80px; }
+
+/* ── HABIT SELECTOR ── */
+.habit-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+}
+
+.habit-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 0.18s;
+  white-space: nowrap;
+}
+.habit-pill:hover { border-color: var(--border2); }
+.habit-pill.active { border-color: var(--active-color, #1a1814); background: var(--active-bg, #f0f0f0); color: var(--ink); }
+.habit-pill .hp-dot { width: 8px; height: 8px; border-radius: 50%; }
+.habit-pill .hp-del { font-size: 14px; color: var(--dim); margin-left: 2px; opacity: 0; transition: opacity 0.15s; }
+.habit-pill:hover .hp-del { opacity: 1; }
+.habit-pill .hp-del:hover { color: #e05a5a; }
+
+.add-habit-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1.5px dashed var(--border2);
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.18s;
+  font-family: var(--sans);
+}
+.add-habit-btn:hover { border-color: var(--ink); color: var(--ink); }
 
