@@ -403,4 +403,399 @@ header {
 .wd-count { font-size: 10px; font-weight: 600; color: var(--muted); margin-top: 4px; }
 
 
+/* EMPTY STATE */
+.empty-state {
+  padding: 60px 28px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.es-icon { font-size: 40px; margin-bottom: 4px; }
+.es-title { font-family: var(--display); font-size: 18px; font-weight: 600; color: var(--ink); }
+.es-sub { font-size: 13px; color: var(--muted); }
+
+@media (max-width: 640px) {
+  header { padding: 0 16px; }
+  .container { padding: 24px 12px 60px; }
+  .mc-header { flex-direction: column; gap: 12px; }
+  .stats-bar { grid-template-columns: 1fr 1fr; }
+  .sb-item:nth-child(2) { border-right: none; }
+  .stats-grid { grid-template-columns: 1fr; }
+  .heatmap-wrap { padding: 16px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Habit<span>Heatmap</span></div>
+  <div class="header-right">
+    <div class="streak-badge" id="streakBadge" style="display:none">🔥 <span id="streakNum">0</span> day streak</div>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- HABIT PILLS -->
+  <div class="habit-row" id="habitRow">
+    <button class="add-habit-btn" onclick="toggleAddForm()">+ add habit</button>
+  </div>
+
+  <!-- ADD FORM -->
+  <div class="add-form" id="addForm">
+    <div class="af-group">
+      <div class="af-label">Habit name</div>
+      <input class="af-input" type="text" id="afName" placeholder="e.g. meditate, journal, workout" style="width:200px" maxlength="24" />
+    </div>
+    <div class="af-group">
+      <div class="af-label">Icon</div>
+      <input class="af-input" type="text" id="afIcon" placeholder="🧘" style="width:72px; font-size:20px; text-align:center" maxlength="2" />
+    </div>
+    <div class="af-group">
+      <div class="af-label">Color</div>
+      <div class="color-swatches" id="colorSwatches"></div>
+    </div>
+    <button class="af-submit" onclick="createHabit()">Create →</button>
+    <button class="af-submit" style="background:transparent;color:var(--muted);border:1px solid var(--border)" onclick="toggleAddForm()">Cancel</button>
+  </div>
+
+  <!-- MAIN CARD -->
+  <div class="main-card" id="mainCard">
+    <div class="empty-state" id="emptyState">
+      <div class="es-icon">🌱</div>
+      <div class="es-title">No habits yet</div>
+      <div class="es-sub">Add your first habit above to start tracking</div>
+    </div>
+    <div id="habitView" style="display:none">
+      <div class="mc-header">
+        <div>
+          <div class="mc-title" id="mcTitle">—</div>
+          <div class="mc-sub" id="mcSub">—</div>
+        </div>
+        <button class="log-today-btn" id="logBtn" onclick="toggleToday()">—</button>
+      </div>
+      <div class="stats-bar">
+        <div class="sb-item"><div class="sb-val" id="sbTotal">0</div><div class="sb-label">Total days</div></div>
+        <div class="sb-item"><div class="sb-val" id="sbStreak">0</div><div class="sb-label">Current streak</div></div>
+        <div class="sb-item"><div class="sb-val" id="sbBest">0</div><div class="sb-label">Best streak</div></div>
+        <div class="sb-item"><div class="sb-val" id="sbRate">0%</div><div class="sb-label">This month</div></div>
+      </div>
+      <div class="heatmap-wrap">
+        <div class="heatmap-months" id="hmMonths"></div>
+        <div class="heatmap-body">
+          <div class="hm-days-col" id="hmDaysCol"></div>
+          <div class="hm-grid" id="hmGrid"></div>
+        </div>
+        <div class="heatmap-legend">
+          <div class="hl-label">Less</div>
+          <div class="hl-cell" style="background:#ede9e0"></div>
+          <div class="hl-cell" id="leg1"></div>
+          <div class="hl-cell" id="leg2"></div>
+          <div class="hl-cell" id="leg3"></div>
+          <div class="hl-label">More</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS GRID -->
+  <div class="stats-grid" id="statsGrid" style="display:none">
+    <div class="stat-card">
+      <div class="sc-label">Best months</div>
+      <div id="monthBars"></div>
+    </div>
+    <div class="stat-card">
+      <div class="sc-label">By day of week</div>
+      <div class="week-day-grid" id="weekDayGrid"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const COLORS = [
+  { hex: "#22c55e", light: "#dcfce7", name: "green" },
+  { hex: "#3b82f6", light: "#dbeafe", name: "blue" },
+  { hex: "#f59e0b", light: "#fef3c7", name: "amber" },
+  { hex: "#ec4899", light: "#fce7f3", name: "pink" },
+  { hex: "#8b5cf6", light: "#ede9fe", name: "purple" },
+  { hex: "#ef4444", light: "#fee2e2", name: "red" },
+  { hex: "#14b8a6", light: "#ccfbf1", name: "teal" },
+];
+
+const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+let habits = JSON.parse(localStorage.getItem("habitHeatmap") || "[]");
+let activeHabitId = habits.length ? habits[0].id : null;
+let selectedColor = COLORS[0];
+
+// ── INIT ──
+function init() {
+  buildColorSwatches();
+  renderHabitPills();
+  if (activeHabitId) renderHabit(activeHabitId);
+}
+
+function buildColorSwatches() {
+  const wrap = document.getElementById("colorSwatches");
+  wrap.innerHTML = COLORS.map((c, i) => `
+    <div class="cs-swatch ${i===0?"active":""}" style="background:${c.hex}" onclick="selectColor(${i})" data-idx="${i}"></div>
+  `).join("");
+}
+
+function selectColor(idx) {
+  selectedColor = COLORS[idx];
+  document.querySelectorAll(".cs-swatch").forEach((s,i) => s.classList.toggle("active", i===idx));
+}
+
+// ── HABITS ──
+function toggleAddForm() {
+  const form = document.getElementById("addForm");
+  form.classList.toggle("open");
+  if (form.classList.contains("open")) document.getElementById("afName").focus();
+}
+
+function createHabit() {
+  const name = document.getElementById("afName").value.trim();
+  if (!name) { document.getElementById("afName").focus(); return; }
+  const icon = document.getElementById("afIcon").value.trim() || "✅";
+  const habit = { id: Date.now(), name, icon, color: selectedColor, logs: [] };
+  habits.push(habit);
+  save();
+  activeHabitId = habit.id;
+  document.getElementById("afName").value = "";
+  document.getElementById("afIcon").value = "";
+  document.getElementById("addForm").classList.remove("open");
+  renderHabitPills();
+  renderHabit(habit.id);
+}
+
+function deleteHabit(id, e) {
+  e.stopPropagation();
+  if (!confirm("Delete this habit and all its data?")) return;
+  habits = habits.filter(h => h.id !== id);
+  save();
+  if (activeHabitId === id) activeHabitId = habits.length ? habits[0].id : null;
+  renderHabitPills();
+  if (activeHabitId) renderHabit(activeHabitId);
+  else showEmpty();
+}
+
+function renderHabitPills() {
+  const row = document.getElementById("habitRow");
+  row.innerHTML = habits.map(h => `
+    <div class="habit-pill ${h.id===activeHabitId?"active":""}"
+      style="${h.id===activeHabitId ? `--active-color:${h.color.hex};--active-bg:${h.color.light}` : ""}"
+      onclick="switchHabit(${h.id})">
+      <div class="hp-dot" style="background:${h.color.hex}"></div>
+      ${h.icon} ${esc(h.name)}
+      <span class="hp-del" onclick="deleteHabit(${h.id}, event)">×</span>
+    </div>
+  `).join("") + `<button class="add-habit-btn" onclick="toggleAddForm()">+ add habit</button>`;
+}
+
+function switchHabit(id) {
+  activeHabitId = id;
+  renderHabitPills();
+  renderHabit(id);
+}
+
+function showEmpty() {
+  document.getElementById("emptyState").style.display = "flex";
+  document.getElementById("habitView").style.display = "none";
+  document.getElementById("statsGrid").style.display = "none";
+  document.getElementById("streakBadge").style.display = "none";
+}
+
+// ── LOG TODAY ──
+function toggleToday() {
+  const h = getActive();
+  if (!h) return;
+  const today = todayStr();
+  const idx = h.logs.indexOf(today);
+  if (idx >= 0) h.logs.splice(idx, 1);
+  else h.logs.push(today);
+  save();
+  renderHabit(h.id);
+}
+
+// ── RENDER HABIT ──
+function renderHabit(id) {
+  const h = habits.find(h => h.id === id);
+  if (!h) return;
+
+  document.getElementById("emptyState").style.display = "none";
+  document.getElementById("habitView").style.display = "block";
+  document.getElementById("statsGrid").style.display = "grid";
+
+  const today = todayStr();
+  const isLogged = h.logs.includes(today);
+
+  document.getElementById("mcTitle").textContent = `${h.icon} ${h.name}`;
+  document.getElementById("mcSub").textContent = `tracking since ${formatDate(h.logs.length ? [...h.logs].sort()[0] : today)}`;
+
+  const logBtn = document.getElementById("logBtn");
+  logBtn.textContent = isLogged ? "✓ logged today" : "log today";
+  logBtn.className = "log-today-btn " + (isLogged ? "logged" : "not-logged");
+  logBtn.style.background = isLogged ? "" : h.color.hex;
+
+  // Stats
+  const streak = calcStreak(h.logs);
+  const bestStreak = calcBestStreak(h.logs);
+  const thisMonth = calcMonthRate(h.logs);
+
+  document.getElementById("sbTotal").textContent = h.logs.length;
+  document.getElementById("sbStreak").textContent = streak;
+  document.getElementById("sbBest").textContent = bestStreak;
+  document.getElementById("sbRate").textContent = thisMonth + "%";
+
+  const streakBadge = document.getElementById("streakBadge");
+  if (streak > 0) {
+    streakBadge.style.display = "flex";
+    document.getElementById("streakNum").textContent = streak;
+  } else {
+    streakBadge.style.display = "none";
+  }
+
+  // Legend
+  const shades = getShades(h.color.hex, 3);
+  document.getElementById("leg1").style.background = shades[0];
+  document.getElementById("leg2").style.background = shades[1];
+  document.getElementById("leg3").style.background = shades[2];
+
+  buildHeatmap(h);
+  buildMonthBars(h);
+  buildWeekDayGrid(h);
+}
+
+// ── HEATMAP ──
+function buildHeatmap(h) {
+  const grid = document.getElementById("hmGrid");
+  const monthsRow = document.getElementById("hmMonths");
+  const daysCol = document.getElementById("hmDaysCol");
+  const logSet = new Set(h.logs);
+  const today = new Date();
+  const todayS = todayStr();
+
+  // Go back 52 weeks from today
+  const end = new Date(today);
+  const start = new Date(today);
+  start.setDate(start.getDate() - (52 * 7) + 1);
+
+  // Align to Sunday
+  while (start.getDay() !== 0) start.setDate(start.getDate() - 1);
+
+  // Build weeks
+  const weeks = [];
+  let cur = new Date(start);
+  while (cur <= end) {
+    const week = [];
+    for (let d = 0; d < 7; d++) {
+      week.push(new Date(cur));
+      cur.setDate(cur.getDate() + 1);
+    }
+    weeks.push(week);
+  }
+
+  // Month labels
+  const monthPositions = {};
+  weeks.forEach((week, wi) => {
+    const firstDay = week[0];
+    const m = firstDay.getMonth();
+    if (!monthPositions[m] || firstDay.getDate() <= 7) {
+      monthPositions[m] = wi;
+    }
+  });
+
+  monthsRow.innerHTML = "";
+  let lastMonth = -1;
+  weeks.forEach((_, wi) => {
+    const cell = document.createElement("div");
+    cell.className = "hm-month";
+    cell.style.width = "13px";
+    const monthForWeek = Object.entries(monthPositions).find(([m, pos]) => pos === wi);
+    if (monthForWeek && parseInt(monthForWeek[0]) !== lastMonth) {
+      cell.textContent = MONTHS[parseInt(monthForWeek[0])];
+      lastMonth = parseInt(monthForWeek[0]);
+    }
+    monthsRow.appendChild(cell);
+  });
+
+  // Day labels
+  daysCol.innerHTML = ["","Mon","","Wed","","Fri",""].map(d =>
+    `<div class="hm-day-label">${d}</div>`
+  ).join("");
+
+  // Grid
+  grid.innerHTML = "";
+  weeks.forEach(week => {
+    const weekEl = document.createElement("div");
+    weekEl.className = "hm-week";
+    week.forEach(day => {
+      const ds = dateStr(day);
+      const isFuture = day > today;
+      const cell = document.createElement("div");
+      if (isFuture) {
+        cell.className = "hm-cell empty";
+      } else {
+        const logged = logSet.has(ds);
+        const isToday = ds === todayS;
+        cell.className = "hm-cell" + (isToday ? " today" : "");
+        cell.style.background = logged ? h.color.hex : "#ede9e0";
+        if (logged) cell.style.opacity = "0.85";
+        const tip = document.createElement("div");
+        tip.className = "cell-tip";
+        tip.textContent = formatDate(ds) + (logged ? " ✓" : "");
+        cell.appendChild(tip);
+        cell.onclick = () => { toggleDay(h, ds); };
+      }
+      weekEl.appendChild(cell);
+    });
+    grid.appendChild(weekEl);
+  });
+}
+
+function toggleDay(h, ds) {
+  const idx = h.logs.indexOf(ds);
+  if (idx >= 0) h.logs.splice(idx, 1);
+  else h.logs.push(ds);
+  save();
+  renderHabit(h.id);
+}
+
+// ── MONTH BARS ──
+function buildMonthBars(h) {
+  const logSet = new Set(h.logs);
+  const today = new Date();
+  const monthCounts = {};
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+    const days = new Date(d.getFullYear(), d.getMonth()+1, 0).getDate();
+    let count = 0;
+    for (let j = 1; j <= days; j++) {
+      const ds = `${key}-${String(j).padStart(2,"0")}`;
+      if (logSet.has(ds)) count++;
+    }
+    monthCounts[MONTHS[d.getMonth()]] = count;
+  }
+
+  const max = Math.max(...Object.values(monthCounts), 1);
+  const h_color = habits.find(hb => hb.id === activeHabitId)?.color.hex || "#22c55e";
+
+  document.getElementById("monthBars").innerHTML = Object.entries(monthCounts).map(([month, count]) => `
+    <div class="sc-bar-item">
+      <div class="sc-bar-name">${month}</div>
+      <div class="sc-bar-track">
+        <div class="sc-bar-fill" style="width:${(count/max)*100}%;background:${h_color}"></div>
+      </div>
+      <div class="sc-bar-val">${count}d</div>
+    </div>
+  `).join("");
+}
+
+
 
