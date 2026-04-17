@@ -222,6 +222,186 @@ header {
   color: var(--white);
 }
 .log-today-btn:active { transform: scale(0.97); }
+/* STATS BAR */
+.stats-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-bottom: 1px solid var(--border);
+}
+
+.sb-item {
+  padding: 16px 24px;
+  border-right: 1px solid var(--border);
+}
+.sb-item:last-child { border-right: none; }
+
+.sb-val {
+  font-family: var(--display);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.5px;
+  margin-bottom: 3px;
+}
+
+.sb-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* HEATMAP */
+.heatmap-wrap {
+  padding: 24px 28px 28px;
+  overflow-x: auto;
+}
+
+.heatmap-months {
+  display: flex;
+  gap: 0;
+  margin-bottom: 4px;
+  padding-left: 28px;
+}
+
+.hm-month {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  flex: none;
+}
+
+.heatmap-body { display: flex; gap: 0; align-items: flex-start; }
+
+.hm-days-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-right: 4px;
+  flex-shrink: 0;
+}
+
+.hm-day-label {
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--dim);
+  letter-spacing: 0.06em;
+  height: 11px;
+  line-height: 11px;
+  width: 20px;
+  text-align: right;
+}
+
+.hm-grid {
+  display: flex;
+  gap: 2px;
+}
+
+.hm-week {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hm-cell {
+  width: 11px;
+  height: 11px;
+  border-radius: 2px;
+  background: #ede9e0;
+  cursor: pointer;
+  transition: transform 0.1s, filter 0.1s;
+  position: relative;
+  flex-shrink: 0;
+}
+.hm-cell:hover { transform: scale(1.4); filter: brightness(0.85); z-index: 2; }
+.hm-cell.empty { cursor: default; background: transparent; }
+.hm-cell.today { outline: 1.5px solid var(--ink); outline-offset: 1px; }
+
+/* TOOLTIP */
+.hm-cell .cell-tip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--ink);
+  color: var(--white);
+  font-size: 10px;
+  font-family: var(--sans);
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: 5px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+  z-index: 10;
+}
+.hm-cell:hover .cell-tip { opacity: 1; }
+
+/* LEGEND */
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  justify-content: flex-end;
+}
+.hl-label { font-size: 10px; font-weight: 500; color: var(--muted); }
+.hl-cell {
+  width: 11px; height: 11px; border-radius: 2px;
+}
+
+/* STATS GRID */
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.stat-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px 22px;
+}
+
+.sc-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+.sc-bar-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.sc-bar-item:last-child { margin-bottom: 0; }
+
+.sc-bar-name { font-size: 12px; font-weight: 500; color: var(--ink); min-width: 24px; }
+.sc-bar-track { flex: 1; height: 5px; background: var(--bg); border-radius: 5px; overflow: hidden; }
+.sc-bar-fill { height: 100%; border-radius: 5px; transition: width 0.8s ease; width: 0%; }
+.sc-bar-val { font-size: 11px; font-weight: 500; color: var(--muted); min-width: 20px; text-align: right; }
+
+.week-day-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.wd-item { text-align: center; }
+.wd-label { font-size: 9px; font-weight: 600; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; }
+.wd-bar { height: 40px; background: var(--bg); border-radius: 4px; display: flex; align-items: flex-end; overflow: hidden; }
+.wd-bar-fill { width: 100%; border-radius: 4px; transition: height 0.8s ease; height: 0%; }
+.wd-count { font-size: 10px; font-weight: 600; color: var(--muted); margin-top: 4px; }
+
 
 
 
